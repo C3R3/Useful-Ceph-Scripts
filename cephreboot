@@ -1,0 +1,44 @@
+#!/bin/bash
+#Creator: nathan.loosevelt@grandblanctwpmi.gov
+#Date Created: 9/17/2023
+#This is a script that automates the tasks needed to put the ceph node in maintenance mode and reboot the server. It will ask you to verify the cluster is healthy before continuing.
+
+RED='\033[1;31m'
+BBlue='\033[1;34m'
+Coloroff='\033[0m'
+
+# Display Ceph Status
+echo ""
+echo ""
+echo -e "${BBlue}## DISPLAYING CLUSTER HEALTH ##${Coloroff}"
+ceph -s
+
+# Prompt for running additional Ceph commands
+echo -e "${RED}## WARNING: A REBOOT SHOULD ONLY BE RUN IF THE CLUSTER IS HEALTHY!${Coloroff}"
+echo ""
+read -p "Do you want to put the node in maintenance mode? (y/n): " answer
+echo ""
+if [ "$answer" == "y" ]; then
+  # Run Ceph maintenance commands
+  ceph osd set noout
+  ceph osd set norecover
+  ceph osd set norebalance
+  echo ""
+elif [ "$answer" == "n" ]; then
+  echo "Exiting script..."
+  exit 0
+else
+  echo "Invalid input. Commands not run, exiting script...."
+fi
+
+# Prompt for server restart
+read -p "Do you want to restart the server? (y/n): " restart_answer
+
+if [ "$restart_answer" == "y" ]; then
+  echo "Restarting the server..."
+  sudo reboot
+elif [ "$restart_answer" == "n" ]; then
+  echo "Server will not be restarted."
+else
+  echo "Invalid input. Commands not run, exiting script...."
+fi
