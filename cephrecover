@@ -1,0 +1,39 @@
+#!/bin/bash
+#Creator: nathan.loosevelt@grandblanctwpmi.gov
+#Date Created: 9/17/2023
+#This script is made to remove a ceph node from maintenance mode after a reboot and to autostart any services that often fail to start.
+
+Red='\033[1;31m'
+BBlue='\033[1;34m'
+Coloroff='\033[0m'
+
+
+  echo ""
+  echo -e "${BBlue}This script will verify/start critical services and remove the node from maintenance mode after a reboot.${Coloroff}"
+#Check if nmbd.service is running
+  echo "" 
+  echo "Checking if critical services are running. If not, the script will attempt to start them..."
+if systemctl is-active --quiet nmbd.service; then
+  echo "The nmbd.service is already running."
+else
+  # Start nmbd.service if it's not running
+  echo "nmbd.service is not running. Starting it now..."
+  sudo systemctl start nmbd.service
+
+  # Check the status again to confirm if it started successfully
+  if systemctl is-active --quiet nmbd.service; then
+    echo "nmbd.service has been successfully started."
+  else
+    echo "Failed to start nmbd.service. Check the service status and logs for more information."
+  fi
+fi
+
+# Run Ceph commands to unset maintenance flags commands
+echo ""
+ceph osd unset noout
+ceph osd unset norecover
+ceph osd unset norebalance
+
+# Prompt employee to verify cluster returns to a healthy state. Run command to open an update ceph status window.
+echo ""
+echo -e "${Red}Verify the cluster returns to a healthy state by running:  ${Coloroff}watch -n1 ceph -s ${Red}. This command is live, to exit the command hit Ctrl+C.${Coloroff}"
